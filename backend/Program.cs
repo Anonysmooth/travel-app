@@ -22,6 +22,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
+// Configure Email Settings
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -41,6 +44,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Register services
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Configure DbContext with PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>

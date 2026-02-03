@@ -8,7 +8,7 @@ Application d'organisation de voyages permettant de planifier des itinéraires, 
 |-----------|-------------|
 | Frontend | Vue.js 3 + Vite |
 | Styling | Tailwind CSS |
-| Backend | .NET 8 (Web API) |
+| Backend | .NET 10 (Web API) |
 | Base de données | PostgreSQL |
 | ORM | Entity Framework Core |
 | Conteneurisation | Docker + Docker Compose |
@@ -166,6 +166,40 @@ docker-compose build                 # Rebuild les images
 | `POSTGRES_DB` | Nom de la base | travelapp |
 | `POSTGRES_USER` | Utilisateur | postgres |
 | `POSTGRES_PASSWORD` | Mot de passe | postgres |
+
+## Connexion à la Base de Données
+
+### Depuis votre machine (client SQL externe)
+
+Pour vous connecter avec un client SQL (DBeaver, pgAdmin, DataGrip, etc.) :
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Host | `localhost` |
+| Port | `5432` |
+| Database | `travelapp` |
+| User | `postgres` |
+| Password | `postgres` |
+
+### Depuis un conteneur Docker (interne)
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Host | `postgres` |
+| Port | `5432` |
+
+### Requêtes via CLI
+
+```bash
+# Accès direct à psql
+docker exec -it travelapp-db psql -U postgres -d travelapp
+
+# Exécuter une requête
+docker exec travelapp-db psql -U postgres -d travelapp -c "SELECT * FROM \"Users\";"
+
+# Lister les tables
+docker exec travelapp-db psql -U postgres -d travelapp -c "\dt"
+```
 
 ## Documentation
 

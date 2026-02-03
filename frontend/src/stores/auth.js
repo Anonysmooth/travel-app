@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Inscription d'un nouvel utilisateur.
-   * En cas de succès, stocke le token et connecte automatiquement.
+   * Ne connecte PAS automatiquement - l'utilisateur doit confirmer son email.
    * @param {string} email - Adresse email.
    * @param {string} password - Mot de passe.
    * @param {string} confirmPassword - Confirmation du mot de passe.
@@ -50,8 +50,40 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      // Appel API d'inscription
-      const response = await authService.register(email, password, confirmPassword)
+      // Appel API d'inscription (pas de token retourné)
+      await authService.register(email, password, confirmPassword)
+
+      // Succès - l'utilisateur doit maintenant vérifier son email
+      return { success: true }
+    } catch (err) {
+      // Extraction des informations d'erreur
+      const errorData = err.response?.data
+      error.value = errorData?.message || "L'inscription a échoué. Veuillez réessayer."
+
+      return {
+        success: false,
+        error: error.value,
+        code: errorData?.code, // Code d'erreur (ex: EMAIL_EXISTS)
+        fieldErrors: errorData?.errors, // Erreurs de validation par champ
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Confirmation de l'adresse email via le token.
+   * En cas de succès, stocke le token JWT et connecte l'utilisateur.
+   * @param {string} confirmationToken - Token reçu par email.
+   * @returns {Promise<{success: boolean, error?: string, code?: string}>}
+   */
+  async function confirmEmail(confirmationToken) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      // Appel API de confirmation
+      const response = await authService.confirmEmail(confirmationToken)
 
       // Stockage du token JWT
       token.value = response.token
@@ -67,13 +99,37 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       // Extraction des informations d'erreur
       const errorData = err.response?.data
-      error.value = errorData?.message || 'Registration failed. Please try again.'
+      error.value = errorData?.message || 'La confirmation a échoué.'
 
       return {
         success: false,
         error: error.value,
-        code: errorData?.code, // Code d'erreur (ex: EMAIL_EXISTS)
-        fieldErrors: errorData?.errors, // Erreurs de validation par champ
+        code: errorData?.code, // Code d'erreur (ex: TOKEN_EXPIRED)
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Renvoie l'email de confirmation.
+   * @param {string} email - Adresse email de l'utilisateur.
+   * @returns {Promise<{success: boolean, error?: string}>}
+   */
+  async function resendConfirmation(email) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await authService.resendConfirmation(email)
+      return { success: true }
+    } catch (err) {
+      const errorData = err.response?.data
+      error.value = errorData?.message || "L'envoi a échoué."
+
+      return {
+        success: false,
+        error: error.value,
       }
     } finally {
       isLoading.value = false
@@ -123,6 +179,8 @@ export const useAuthStore = defineStore('auth', () => {
     userEmail,
     // Actions
     register,
+    confirmEmail,
+    resendConfirmation,
     logout,
     clearError,
     initializeFromToken,
